@@ -32,21 +32,34 @@ def maximum(values):
             biggest = i
     return biggest
 
-# Polygon Class creating MBR
+# Polygon Class and creating MBR
 class Poly:
 
-    def __init__(self, poly):
-        self.poly = poly
+    def __init__(self, poly_points):
+        self.poly_points = poly_points
         self.values_list()
+        self.lines_list()
 
     def values_list(self):
         self.x_values = []
         self.y_values = []
-        for i in range(len(self.poly)):
-            self.x_values.append(self.poly[i][1])
-            self.y_values.append(self.poly[i][2])
+        for i in range(len(self.poly_points)):
+            self.x_values.append(self.poly_points[i][1])
+            self.y_values.append(self.poly_points[i][2])
         print(self.x_values)
         print(self.y_values)
+
+    def lines_list(self):
+        self.lines = []
+        p1 = self.x_values[0], self.y_values[0]
+        for i in range(len(self.poly_points)):
+            if i == 0:
+                print('skip')
+            else:
+                self.lines.append(tuple([p1,(self.x_values[i],self.y_values[i])]))
+                p1 = self.x_values[i], self.y_values[i]
+        self.lines.append(tuple([p1,(self.x_values[0],self.y_values[0])]))
+
 
     def mbr(self):
         self.min_x = minimum(self.x_values)
@@ -66,6 +79,7 @@ class Poly:
             return 'outside'
 
 
+# Creating input point class
 class Point:
     def __init__(self, points):
         self.points = points
@@ -85,14 +99,15 @@ def main():
     poly = import_data("C:/Users/17075/Assignment_1/Project Template/polygon.csv")
     points = import_data("C:/Users/17075/Assignment_1/Project Template/input.csv")
     test = Poly(poly)
+    test.lines_list()
     test.mbr()
 
     point_test = Point(points)
     point_test.get_point(0)
     x,y = point_test.get_point(0)
     print('({},{})'.format(x,y))
-
-    print(test.classify_mbr(x,y))
+    #print(f'({x},{y})')
+    #print(test.classify_mbr(x,y))
 
     plot = Plotter()
     plot.add_polygon(test.x_values,test.y_values)
