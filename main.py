@@ -103,35 +103,18 @@ class Poly:
         self.lines.append(tuple([p1,(self.x_values[0],self.y_values[0])]))
         print(self.lines)
 
-    def on_line(self, input_points):
+    def classify(self, ray_lines):
         res = []
-        for item in input_points:
+        for item in ray_lines:
             temp = []
             if item in self.poly_points:
                 temp.append('Boundary')
             else:
                 for line in self.lines:
-                    # res.append([line[0][0], line[0][1], line[1][0], line[1][1], item[0], item[1]])
-                    temp.append(on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1], item[0], item[1]))
-                    # if line[0][0] == line[1][0]:
-                    #     res.append('Boundary')
-                    # if (item[0] - line[0][0])/(line[1][0] - line[0][0]) = (item[1] - line[0][1])/(line[1][1] - line[0][1]):
-                    #     res.append()
-                    # print(line)
-
+                    temp.append(on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1], item[0][0], item[0][1]))
             res.append(temp)
         self.results = res
         print(self.results)
-
-
-        #  x* - x1/x2 - x1 = y* - y1 / y2 - y1 if this equality holds then the point x*,y* is on the line
-        # if x2 = x1 it results in not defined so x* is on the line if x* = x2 or x* = x1
-
-   # def rca(self):
-
-        # loop through points objects and establish corresponding ray points (very large x values)
-        # write formula for intersection
-
 
 
     def mbr(self):
@@ -160,18 +143,18 @@ class Point:
     def get_point(self, i):
         return self.points[i][1],self.points[i][2]
 
-    def ray_points(self, mbr_max_x):
+    def ray_lines(self, mbr_max_x):
         self.rca_x = mbr_max_x + 1
-        self.ray_points = []
-        for i in self.points:
-            self.ray_points.append([self.rca_x, self.points[i][1]])
-        return self.ray_points
-
-    def ray_lines(self):
         self.ray_lines = []
-        for i in self.points:
-            self.ray_lines.append([self.points[i],self.ray_points[i]])
+        for i in range(len(self.points)):
+            self.ray_lines.append(tuple([(self.points[i][0], self.points[i][1]), (self.rca_x, self.points[i][1])]))
         return self.ray_lines
+
+    # def ray_lines(self):
+    #     self.ray_lines = []
+    #     for i in self.points:
+    #         self.ray_lines.append([self.points[i],self.ray_points[i]])
+    #     return self.ray_lines
 
     # def get_all_points(self):
     #     points_list = []
@@ -192,11 +175,13 @@ def main():
     points = import_data("C:/Users/17075/Assignment_1/Project Template/input.csv")
     print(points)
     test = Poly(poly)
-    # test.mbr()
-    print(on_line_seg(1, 1, 1, 5, 1, 4))
+    test.mbr()
+
 
     point_test = Point(points)
-    test.on_line(point_test.points)
+    print(point_test.ray_lines(test.max_x))
+
+    test.classify(point_test.ray_lines)
 
     # point_test.get_point(0)
     # x,y = point_test.get_point(0)
