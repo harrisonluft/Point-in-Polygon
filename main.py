@@ -33,25 +33,48 @@ def maximum(values):
     return biggest
 
 # Adapted from https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python
-def on_line_seg(x1, y1, x2, y2, input_x, input_y): # using poin/slope formula to determine if input point is on line segment of polygon
+def on_line_seg(x1, y1, x2, y2, input_x, input_y): # using point/slope formula to determine if input point is on line segment of polygon
     if x1 != x2:
         slope = (y2 - y1)/(x2 - x1)
         on_line = input_y - y1 == slope * (input_x - x1)
-        line_seg_mbr = (minimum(x1,x2) <= input_x <= maximum(x1,x2)) and (minimum(y1,y2) <= input_y <= maximum(y1,y2)) # using mbr method to confirm point is in between points of line segments
+        line_seg_mbr = (min(x1, x2) <= input_x <= max(x1, x2)) and (min(y1, y2) <= input_y <= max(y1, y2))
+        # using mbr method to confirm point is in between points of line segments
         on_border = on_line and line_seg_mbr
-        if on_border == True:
+        if on_border:
             return 'Boundary'
         else:
             return 'Unclassified'
     else:
-        on_border = (x2 == input_x) and (minimum(y1,y2) <= input_y <= maximum(y1,y2))
-        if on_border == True:
+        on_border = (x2 == input_x) and (min(y1, y2) <= input_y <= max(y1, y2))
+        if on_border:
             return 'Boundary'
         else:
             return 'Unclassified'
 
+# adapted from https://silentmatt.com/rectangle-intersection/
+def mbr_seg(x1, y1, x2, y2, x3, y3, x4, y4): # bounding boxes of line segments must overlap for there to be intersection
+    mbr_overlap = x1 <= x4 and x2 >= x3 and y1 <= y4 and y2 >= y3
+    return mbr_overlap # True/False for intersection of boxes
 
-# Polygon Class and creating MBR
+# Adapted from https://rosettacode.org/wiki/Find_the_intersection_of_two_lines
+def line_intersect(Ax1, Ay1, Ax2, Ay2, Bx1, By1, Bx2, By2): # only identifies non collinear intersections, returns None for collinear lines
+# returns a (x, y) tuple or None if there is no intersection
+# will use the (x, y) return to adjust for crossing vertices
+    d = (By2 - By1) * (Ax2 - Ax1) - (Bx2 - Bx1) * (Ay2 - Ay1)
+    if d:
+        uA = ((Bx2 - Bx1) * (Ay1 - By1) - (By2 - By1) * (Ax1 - Bx1)) / d
+        uB = ((Ax2 - Ax1) * (Ay1 - By1) - (Ay2 - Ay1) * (Ax1 - Bx1)) / d
+    else:
+        return
+    if not (0 <= uA <= 1 and 0 <= uB <= 1):
+        return
+    x = Ax1 + uA * (Ax2 - Ax1)
+    y = Ay1 + uA * (Ay2 - Ay1)
+
+    return x, y
+
+
+ # Polygon Class and creating MBR
 class Poly:
 
     def __init__(self, poly_points):
@@ -83,20 +106,22 @@ class Poly:
     def on_line(self, input_points):
         res = []
         for item in input_points:
+            temp = []
             if item in self.poly_points:
-                res.append('Boundary')
+                temp.append('Boundary')
             else:
                 for line in self.lines:
+                    # res.append([line[0][0], line[0][1], line[1][0], line[1][1], item[0], item[1]])
+                    temp.append(on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1], item[0], item[1]))
                     # if line[0][0] == line[1][0]:
                     #     res.append('Boundary')
                     # if (item[0] - line[0][0])/(line[1][0] - line[0][0]) = (item[1] - line[0][1])/(line[1][1] - line[0][1]):
                     #     res.append()
                     # print(line)
-                    pass
-                res.append('Unclassified')
+
+            res.append(temp)
         self.results = res
-
-
+        print(self.results)
 
 
         #  x* - x1/x2 - x1 = y* - y1 / y2 - y1 if this equality holds then the point x*,y* is on the line
@@ -135,6 +160,19 @@ class Point:
     def get_point(self, i):
         return self.points[i][1],self.points[i][2]
 
+    def ray_points(self, mbr_max_x):
+        self.rca_x = mbr_max_x + 1
+        self.ray_points = []
+        for i in self.points:
+            self.ray_points.append([self.rca_x, self.points[i][1]])
+        return self.ray_points
+
+    def ray_lines(self):
+        self.ray_lines = []
+        for i in self.points:
+            self.ray_lines.append([self.points[i],self.ray_points[i]])
+        return self.ray_lines
+
     # def get_all_points(self):
     #     points_list = []
     #     for i in range(len(self.points)):  # converting coordinates to float
@@ -155,6 +193,7 @@ def main():
     print(points)
     test = Poly(poly)
     # test.mbr()
+    print(on_line_seg(1, 1, 1, 5, 1, 4))
 
     point_test = Point(points)
     test.on_line(point_test.points)
