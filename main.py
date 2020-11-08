@@ -2,17 +2,17 @@ from plotter import Plotter
 
 # Import Points for Classification
 def import_data(path):
+    raw_list = []
     data_list = []
     with open(path, "r") as f:
         for line in f.readlines():
-            data_list.append(line.split(','))
+            raw_list.append(line.split(','))
 
-    data_list = data_list[1:] # getting rid of the headings
+    raw_list = raw_list[1:] # getting rid of the headings
 
-    for i in range(len(data_list)): # converting coordinates to float
-            data_list[i][0] = float(data_list[i][0])
-            data_list[i][1] = float(data_list[i][1])
-            data_list[i][2] = float(data_list[i][2])
+    for i in range(len(raw_list)): # converting coordinates to float
+        data_list.append([float(raw_list[i][1]), float(raw_list[i][2])])
+
     return data_list
 
 # Minimum and Maximum functions
@@ -32,6 +32,25 @@ def maximum(values):
             biggest = i
     return biggest
 
+# Adapted from https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python
+def on_line_seg(x1, y1, x2, y2, input_x, input_y): # using poin/slope formula to determine if input point is on line segment of polygon
+    if x1 != x2:
+        slope = (y2 - y1)/(x2 - x1)
+        on_line = input_y - y1 == slope * (input_x - x1)
+        line_seg_mbr = (minimum(x1,x2) <= input_x <= maximum(x1,x2)) and (minimum(y1,y2) <= input_y <= maximum(y1,y2)) # using mbr method to confirm point is in between points of line segments
+        on_border = on_line and line_seg_mbr
+        if on_border == True:
+            return 'Boundary'
+        else:
+            return 'Unclassified'
+    else:
+        on_border = (x2 == input_x) and (minimum(y1,y2) <= input_y <= maximum(y1,y2))
+        if on_border == True:
+            return 'Boundary'
+        else:
+            return 'Unclassified'
+
+
 # Polygon Class and creating MBR
 class Poly:
 
@@ -44,8 +63,8 @@ class Poly:
         self.x_values = []
         self.y_values = []
         for i in range(len(self.poly_points)):
-            self.x_values.append(self.poly_points[i][1])
-            self.y_values.append(self.poly_points[i][2])
+            self.x_values.append(self.poly_points[i][0])
+            self.y_values.append(self.poly_points[i][1])
         print(self.x_values)
         print(self.y_values)
 
@@ -54,11 +73,40 @@ class Poly:
         p1 = self.x_values[0], self.y_values[0]
         for i in range(len(self.poly_points)):
             if i == 0:
-                print('skip')
+                continue
             else:
                 self.lines.append(tuple([p1,(self.x_values[i],self.y_values[i])]))
                 p1 = self.x_values[i], self.y_values[i]
         self.lines.append(tuple([p1,(self.x_values[0],self.y_values[0])]))
+        print(self.lines)
+
+    def on_line(self, input_points):
+        res = []
+        for item in input_points:
+            if item in self.poly_points:
+                res.append('Boundary')
+            else:
+                for line in self.lines:
+                    # if line[0][0] == line[1][0]:
+                    #     res.append('Boundary')
+                    # if (item[0] - line[0][0])/(line[1][0] - line[0][0]) = (item[1] - line[0][1])/(line[1][1] - line[0][1]):
+                    #     res.append()
+                    # print(line)
+                    pass
+                res.append('Unclassified')
+        self.results = res
+
+
+
+
+        #  x* - x1/x2 - x1 = y* - y1 / y2 - y1 if this equality holds then the point x*,y* is on the line
+        # if x2 = x1 it results in not defined so x* is on the line if x* = x2 or x* = x1
+
+   # def rca(self):
+
+        # loop through points objects and establish corresponding ray points (very large x values)
+        # write formula for intersection
+
 
 
     def mbr(self):
@@ -66,11 +114,11 @@ class Poly:
         self.min_y = minimum(self.y_values)
         self.max_x = maximum(self.x_values)
         self.max_y = maximum(self.y_values)
-        print('MBR:')
-        print('Lower Left:', '(',self.min_x, self.min_y,')')
-        print('Upper Left:', '(',self.min_x, self.max_y, ')')
-        print('Upper Right:', '(',self.max_x, self.max_y, ')')
-        print('Lower Right:', '(', self.max_x, self.min_y, ')')
+        # print('MBR:')
+        # print('Lower Left:', '(',self.min_x, self.min_y,')')
+        # print('Upper Left:', '(',self.min_x, self.max_y, ')')
+        # print('Upper Right:', '(',self.max_x, self.max_y, ')')
+        # print('Lower Right:', '(', self.max_x, self.min_y, ')')
 
     def classify_mbr(self, x, y):
         if (x <= self.max_x) and (y <= self.max_y) and (x >= self.min_x) and (y >= self.min_y):
@@ -87,6 +135,11 @@ class Point:
     def get_point(self, i):
         return self.points[i][1],self.points[i][2]
 
+    # def get_all_points(self):
+    #     points_list = []
+    #     for i in range(len(self.points)):  # converting coordinates to float
+    #         points_list.append([float(self.points[i][1]), float(self.points[i][2])])
+    #     return points_list
 
     # def get_id(self):
     #     return self.id
@@ -97,22 +150,25 @@ class Point:
     #     return self.y
 def main():
     poly = import_data("C:/Users/17075/Assignment_1/Project Template/polygon.csv")
+    print(poly)
     points = import_data("C:/Users/17075/Assignment_1/Project Template/input.csv")
+    print(points)
     test = Poly(poly)
-    test.lines_list()
-    test.mbr()
+    # test.mbr()
 
     point_test = Point(points)
-    point_test.get_point(0)
-    x,y = point_test.get_point(0)
-    print('({},{})'.format(x,y))
+    test.on_line(point_test.points)
+
+    # point_test.get_point(0)
+    # x,y = point_test.get_point(0)
+    # print('({},{})'.format(x,y))
     #print(f'({x},{y})')
     #print(test.classify_mbr(x,y))
 
-    plot = Plotter()
-    plot.add_polygon(test.x_values,test.y_values)
-    plot.add_point(x,y,kind='inside')
-    plot.show()
+    # plot = Plotter()
+    # plot.add_polygon(test.x_values,test.y_values)
+    # plot.add_point(x,y,kind='inside')
+    # plot.show()
 
 
 if __name__ == '__main__':
