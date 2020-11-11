@@ -15,6 +15,17 @@ def import_data(path):
 
     return data_list
 
+def export_data(path, exports):
+    id = []
+    n = 1
+    for i in range(len(exports)):
+        id.append(str(n+i))
+    with open(path, "w") as f:
+        f.write(','.join(['ID','classifications','\n']))
+        for j in range(len(exports)):
+            f.write(','.join([id[j], exports[j],'\n']))
+
+
 # Minimum and Maximum functions
 
 def minimum(values):
@@ -69,9 +80,9 @@ def overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):
     return overlap
 
 # Adapted from https://rosettacode.org/wiki/Find_the_intersection_of_two_lines
-def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4): # only identifies non collinear intersections, returns None for collinear lines
+def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4): # only identifies non coincident intersections, returns None for coincident lines
 # returns a (x, y) tuple or None if there is no intersection
-# will use the (x, y) return to adjust for crossing vertices
+# will use the (x, y) return as a reference to the original lines to adjust for crossing vertices
     d = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
     if d:
         uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / d
@@ -94,8 +105,6 @@ def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
 
     # if mbr_seg(x1, y1, x2, y2, x3, y3, x4, y4):
 
-
-
  # Polygon Class and creating MBR
 class Poly:
 
@@ -104,14 +113,14 @@ class Poly:
         self.values_list()
         self.lines_list()
 
+
     def values_list(self):
         self.x_values = []
         self.y_values = []
         for i in range(len(self.poly_points)):
             self.x_values.append(self.poly_points[i][0])
             self.y_values.append(self.poly_points[i][1])
-        print(self.x_values)
-        print(self.y_values)
+
 
     def lines_list(self):
         self.lines = []
@@ -123,18 +132,14 @@ class Poly:
                 self.lines.append(tuple([p1,(self.x_values[i],self.y_values[i])]))
                 p1 = self.x_values[i], self.y_values[i]
         self.lines.append(tuple([p1,(self.x_values[0],self.y_values[0])]))
-        print(self.lines)
+
 
     def mbr(self):
         self.min_x = minimum(self.x_values)
         self.min_y = minimum(self.y_values)
         self.max_x = maximum(self.x_values)
         self.max_y = maximum(self.y_values)
-        # print('MBR:')
-        # print('Lower Left:', '(',self.min_x, self.min_y,')')
-        # print('Upper Left:', '(',self.min_x, self.max_y, ')')
-        # print('Upper Right:', '(',self.max_x, self.max_y, ')')
-        # print('Lower Right:', '(', self.max_x, self.min_y, ')')
+
 
     def classify_mbr(self, x, y):
         if (x <= self.max_x) and (y <= self.max_y) and (x >= self.min_x) and (y >= self.min_y):
@@ -152,59 +157,61 @@ class Poly:
             elif item in self.poly_points: # Assign boundary points if in polygon boundary points
                 temp.append('Boundary')
             else:
-                for line in self.lines: # for each polygon line segment determine if point is on line --> Boundary or find its intersection, if any.
+                for line in self.lines:
                     if on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1], item[0][0], item[0][1]):
                         temp.append('Boundary')
                     else:
                         temp.append(intersect_check(line[0][0], line[0][1], line[1][0], line[1][1], item[0][0], item[0][1], item[1][0], item[1][1]))
             res.append(temp)
         self.results = res
-        print(self.results)
+
 
     def count(self):
         counter = []
         for item in self.results:
-            n = 0 # need to deal with boundary points out of loop
+            n = 0  # need to deal with boundary points out of loop
             for i in range(len(item)):
-                if i == (len(item)-2): # need to specify case for end of list -2 since there are '+2' cases
+                if i == (len(item)-2):  # need to specify case for end of list -2 since there are '+2' cases
                     if item[i] == 'Outside':
                         n = 0
-                    elif item[i] == None: # if no intersection do not add to count
+                    elif item[i] == None:  # if no intersection do not add to count
                            pass
                     elif item[i+1] == 'Collinear': # if intersects collinear line then do same test as vertex above
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # see what the orientation is for line 1
-                        self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # see what the orientation is for line +2
+                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                        self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # orientation for line +2
                         if (self.max_y1  > item[i][1] and self.max_y2 > item[0][1]) or (self.max_y1  < item[i][1] and self.max_y2 < item[0][1]): # if they are the same record 0 count
                             pass
                         else: # if not, record +1
                             n += 1
-                    elif item[i] == item[i+1] and item[i] != 'Boundary': # if intersections are the same for two sequential lines
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1]) # see what the orientation is for line 1
-                        self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1]) # see what the orientation is for line 2
-                        if (self.max_y1  > item[i][1] and self.max_y2 > item[i+1][1]) or (self.max_y1  == item[i][1] and self.max_y2 == item[i+1][1]): # if they are the same do not count
+                    elif item[i] == item[i+1] and item[i] != 'Boundary':  # vertex intersection
+                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                        self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1])  # orientation for line +2
+                        if (self.max_y1  > item[i][1] and self.max_y2 > item[i+1][1]) or \
+                                (self.max_y1 == item[i][1] and self.max_y2 == item[i+1][1]):  # test orientation
                             pass
-                        else: # if not, record +1
+                        else:  # record +1 of opposing lines
                             n += 1
                     elif (item[i] == item[i-1]) or item[i] == 'Collinear' or item[i-1] == 'Collinear':
                         pass
                     else:
                         n += 1
-                elif i == (len(item)-1): # need to specify case for end of list since there are +1/+2 cases
+                elif i == (len(item)-1): # specify cases for end of list since there are +1/+2 cases
                     if item[i] == 'Outside':
                         n = 0
                     elif item[i] == None: # if no intersection do not add to count
                             n = n
                     elif item[0] == 'Collinear': # if intersects collinear line then do same test as vertex above
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # see what the orientation is for line 1
-                        self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # see what the orientation is for line +2
-                        if (self.max_y1  > item[i][1] and self.max_y2 > item[1][1]) or (self.max_y1  < item[i][1] and self.max_y2 < item[1][1]): # if they are the same record 0 count
+                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                        self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # orientation for line 2
+                        if (self.max_y1 > item[i][1] and self.max_y2 > item[1][1]) or \
+                                (self.max_y1 < item[i][1] and self.max_y2 < item[1][1]): # if they are the same record 0 count
                             n = n
-                        else: # if not, record +1
+                        else:  # record +1 of opposing lines
                             n += 1
                     elif item[i] == item[0] and item[i] != 'Boundary': # if intersections are the same for two sequential lines
                         self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1]) # see what the orientation is for line 1
                         self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1]) # see what the orientation is for line 2
-                        if (self.max_y1  > item[i][1] and self.max_y2 > item[0][1]) or (self.max_y1  == item[i][1] and self.max_y2 == item[0][1]): # if they are the same do not count
+                        if (self.max_y1  > item[i][1] and self.max_y2 > item[0][1]) or (self.max_y1 == item[i][1] and self.max_y2 == item[0][1]): # if they are the same do not count
                             n = n
                         else: # if not, record +1
                             n += 1
@@ -242,7 +249,6 @@ class Poly:
                     pass
             counter.append(n)
         self.count = counter
-        print(self.count)
 
     def define_label(self):
         label = []
@@ -251,37 +257,11 @@ class Poly:
                 label.append('outside')
             elif n < 0:
                 label.append('boundary')
-            elif (n % 2) !=0:
+            elif (n % 2) != 0:
                 label.append('inside')
         self.point_label = label
         print(self.point_label)
 
-
-
-    # for loop to loop through all the input points lists
-    # then when in inner list of 20 do a for loop based on numerical list because we need to access the indicies before after and the polygon list.
-        # for each item in each list of results:
-
-        # if point is in front or behind "collinear" then it is counted as 0.5
-
-        # if there are two of the same points with lines above and below the vertex, it is counted as 1
-            # TO DO: how to determine whether the correspoding line is above or below,
-                # IDEA: if min y of the line point pair is the vertex, the line reside above, else it resides below.
-                # QUESTIONS: how do i access the lines pairs? (they should be indexed against the list values 1-20)
-                # then how do I compare the l-1 and l?
-
-        # if there are two of the same points with both lines below and both above it is not counted
-
-        # sum the total value of the lists and round up for values > 1, odd is inside, even is outside.
-
-        # if less than 1, do not round. It is outside.
-
-
-
-
-
-    # def classify_intersect(self):
-    #     for
 
 # Creating input point class
 class Point:
@@ -289,7 +269,7 @@ class Point:
         self.points = points
 
     def get_point(self, i):
-        return self.points[i][0],self.points[i][1]
+        return self.points[i][0], self.points[i][1]
 
     def ray_lines(self, mbr_max_x):
         self.rca_x = mbr_max_x + 1
@@ -299,71 +279,46 @@ class Point:
         return self.ray_lines
 
 
-
-def main():
-    poly = import_data("C:/Users/17075/Assignment_1/Project Template/polygon.csv")
-    print(poly)
-    points = import_data("C:/Users/17075/Assignment_1/Project Template/input.csv")
-    print(points)
-    test = Poly(poly) # init poly class, create x and y lists
-    test.mbr() # create bounding box for polygon
-
-
-    point_test = Point(points) # init point class
-    #print(rca(3.0, 5.0, 2.0, 6.0, 1.0, 5.5, 5.0, 5.5))
-    #print(rca(2.0, 6.0, 1.0, 5.0, 1.0, 5.5, 5.0, 5.5))
-    # print(mbr_seg(2.0, 6.0, 1.0, 5.0, 1.0, 5.5, 5.0, 5.5))
-
-    point_test.ray_lines(test.max_x) # create ray's for each point based on poly bounding box
-    test.rca(point_test.ray_lines) # generate list with intersections, collinear instances, boundaries and MBR tests
-    test.count() # count based on elements in list: +1 for plain intersection, +0 for same side vertex/collinear instance, and +1 for dual side vertex/collinear instance
-    test.define_label()
-    # point_test.get_point(1)
-    # x, y = point_test.get_point(1)
-    # print('({},{})'.format(x,y))
-    #print(f'({x},{y})')
-    #print(test.classify_mbr(x,y))
-
+def main(polygon_path, input_points_path, output_path):
     plot = Plotter()
-    plot.add_polygon(test.x_values,test.y_values)
-    for i in range(len(point_test.points)):
-        plot.add_point(point_test.points[i][0], point_test.points[i][1], kind=test.point_label[i])
+
+    # import data
+    poly_points = import_data(polygon_path)
+    points = import_data(input_points_path)
+
+    # init Polygon class
+    polygon = Poly(poly_points)
+
+    # create bounding box for polygon
+    polygon.mbr()
+
+    # init Point class
+    input_points = Point(points)
+
+    # create ray's for each point based on max x value of polygon bounding box
+    input_points.ray_lines(polygon.max_x)
+
+    # generate list with intersections, collinear instances, boundaries and MBR tests
+    polygon.rca(input_points.ray_lines)
+
+    # count based on elements in list: +1 for plain intersection,
+    # +0 for same side vertex/coincident instance,
+    # and +1 for dual side vertex/coincident instance
+    # borders are given as -1,
+    # outside mbr is given 0
+    polygon.count()
+
+    # apply labels to counts
+    polygon.define_label()
+    export_data(output_path, polygon.point_label)
+    # plot
+    plot.add_polygon(polygon.x_values, polygon.y_values)
+    for i in range(len(input_points.points)):
+        plot.add_point(input_points.points[i][0], input_points.points[i][1], kind=polygon.point_label[i])
     plot.show()
 
 
 if __name__ == '__main__':
-    main()
-
-
-
-# Want to store the min/max of the x's and y's in a class but don't know how to do this right now
-# class Minimum_x_y:
-#     def __init__(self, id, x, y):
-#         super().__init__(id)
-#         super().__init__(x)
-#         super().__init__(y)
-
-# Finding min/max using a function, first appending the min and max into their own lists
-# This seems and inefficient way to do it, still thinking about it
-# x_coords = []
-# y_coords = []
-# for i in range(len(poly)):
-#     coords = Coordinates(poly[i][0], poly[i][1], poly[i][2])
-#     x_coords.append(coords.get_x())
-#     y_coords.append(coords.get_y())
-#
-# minimum_coords = (minimum(x_coords), minimum(y_coords))
-# maximum_coords = (maximum(x_coords), maximum(y_coords))
-#
-# print(minimum_coords)
-# print(maximum_coords)
-
-# smallest = xs[0]
-#         for coord_x in xs[1:]:
-#             if smallest > coord_x:
-#                 smallest = coord_x
-#         return smallest
-
-# coords = []
-# for i in range(len(poly)):
-#     coords.append([poly[i][1],poly[i][2]])
+    main("C:/Users/17075/Assignment_1/Project Template/polygon.csv",
+         "C:/Users/17075/Assignment_1/Project Template/input.csv",
+         "C:/Users/17075/Assignment_1/Project Template/output_test.csv")
