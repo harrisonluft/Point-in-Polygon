@@ -1,5 +1,6 @@
 from plotter import Plotter
 
+
 # Import Points for Classification
 def import_data(path):
     raw_list = []
@@ -8,12 +9,13 @@ def import_data(path):
         for line in f.readlines():
             raw_list.append(line.split(','))
 
-    raw_list = raw_list[1:] # getting rid of the headings
+    raw_list = raw_list[1:]  # getting rid of the headings
 
-    for i in range(len(raw_list)): # converting coordinates to float
+    for i in range(len(raw_list)):  # converting coordinates to float
         data_list.append([float(raw_list[i][1]), float(raw_list[i][2])])
 
     return data_list
+
 
 def export_data(path, exports):
     id = []
@@ -21,12 +23,10 @@ def export_data(path, exports):
     for i in range(len(exports)):
         id.append(str(n+i))
     with open(path, "w") as f:
-        f.write(','.join(['ID','classifications','\n']))
+        f.write(','.join(['ID', 'classifications', '\n']))
         for j in range(len(exports)):
-            f.write(','.join([id[j], exports[j],'\n']))
+            f.write(','.join([id[j], exports[j], '\n']))
 
-
-# Minimum and Maximum functions
 
 def minimum(values):
     smallest = values[0]
@@ -43,13 +43,15 @@ def maximum(values):
             biggest = i
     return biggest
 
-# Adapted from https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python
-def on_line_seg(x1, y1, x2, y2, input_x, input_y): # using point/slope formula to determine if input point is on line segment of polygon
+
+# adapted from https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python
+# using point/slope formula to determine if input point is on line segment of polygon
+def on_line_seg(x1, y1, x2, y2, input_x, input_y):
     if x1 != x2:
         slope = (y2 - y1)/(x2 - x1)
         on_line = input_y - y1 == slope * (input_x - x1)
         line_seg_mbr = (min(x1, x2) <= input_x <= max(x1, x2)) and (min(y1, y2) <= input_y <= max(y1, y2))
-        # using mbr method to confirm point is in between points of line segments
+        # using mbr methodology to confirm point is in between points of line segments
         on_border = on_line and line_seg_mbr
         if on_border:
             return True
@@ -62,57 +64,45 @@ def on_line_seg(x1, y1, x2, y2, input_x, input_y): # using point/slope formula t
         else:
             return False
 
-# adapted from https://silentmatt.com/rectangle-intersection/
-# Mbr's must intersect for lines to intersect.
-# Because the ray's extend beyond the polygon's maximum bounds, if the boxes intersect
-# there is an intersection.
 
-# This does not take into account overlapping segments, will build another function for that.
-# First check:
-def mbr_seg(x1, y1, x2, y2, x3, y3, x4, y4):
-    mbr_overlap = x1 <= x4 and x2 >= x3 and y1 <= y4 and y2 >= y3
-    return mbr_overlap # True/False for intersection of bounding boxes
-
-def overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):
+def overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):  # identifies coincident lines
     y_overlap = y1 == y2 and y1 == y3 and y1 == y4
     x_overlap = x1 <= x4 and x2 >= x3
     overlap = y_overlap and x_overlap
     return overlap
 
+
 # Adapted from https://rosettacode.org/wiki/Find_the_intersection_of_two_lines
-def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4): # only identifies non coincident intersections, returns None for coincident lines
-# returns a (x, y) tuple or None if there is no intersection
-# will use the (x, y) return as a reference to the original lines to adjust for crossing vertices
+def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4):
+    # returns a (x, y) tuple or None if there is no intersection or coincident
+    # will use the (x, y) return as a reference to the original lines to adjust for crossing vertices
     d = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
     if d:
-        uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / d
-        uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / d
+        ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / d
+        ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / d
     else:
         return
-    if not (0 <= uA <= 1 and 0 <= uB <= 1):
+    if not (0 <= ua <= 1 and 0 <= ub <= 1):
         return
-    x = x1 + uA * (x2 - x1)
-    y = y1 + uA * (y2 - y1)
+    x = x1 + ua * (x2 - x1)
+    y = y1 + ua * (y2 - y1)
     return x, y
 
 
 def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
-    # if mbr intersect, check collinearity as a marker for checking vertices
+    # if mbr intersect, check coincidence as a marker for checking vertices
     if overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):
-        return 'Collinear'
+        return 'Coincident'
     else:
         return get_intersect(x1, y1, x2, y2, x3, y3, x4, y4)
 
-    # if mbr_seg(x1, y1, x2, y2, x3, y3, x4, y4):
 
- # Polygon Class and creating MBR
 class Poly:
 
     def __init__(self, poly_points):
         self.poly_points = poly_points
         self.values_list()
         self.lines_list()
-
 
     def values_list(self):
         self.x_values = []
@@ -121,7 +111,6 @@ class Poly:
             self.x_values.append(self.poly_points[i][0])
             self.y_values.append(self.poly_points[i][1])
 
-
     def lines_list(self):
         self.lines = []
         p1 = self.x_values[0], self.y_values[0]
@@ -129,10 +118,9 @@ class Poly:
             if i == 0:
                 continue
             else:
-                self.lines.append(tuple([p1,(self.x_values[i],self.y_values[i])]))
+                self.lines.append(tuple([p1, (self.x_values[i], self.y_values[i])]))
                 p1 = self.x_values[i], self.y_values[i]
-        self.lines.append(tuple([p1,(self.x_values[0],self.y_values[0])]))
-
+        self.lines.append(tuple([p1, (self.x_values[0], self.y_values[0])]))
 
     def mbr(self):
         self.min_x = minimum(self.x_values)
@@ -140,105 +128,108 @@ class Poly:
         self.max_x = maximum(self.x_values)
         self.max_y = maximum(self.y_values)
 
-
     def classify_mbr(self, x, y):
         if (x <= self.max_x) and (y <= self.max_y) and (x >= self.min_x) and (y >= self.min_y):
             return 'Inside'
         else:
             return 'Outside'
 
-
     def rca(self, ray_lines):
         res = []
-        for item in ray_lines: # for each input point  run the following
+        for item in ray_lines:
             temp = []
-            if self.classify_mbr(item[0][0], item[0][1]) == 'Outside': # determine inside/outside for MBR
+            if self.classify_mbr(item[0][0], item[0][1]) == 'Outside':  # determine inside/outside for MBR
                 temp.append('Outside')
-            elif item in self.poly_points: # Assign boundary points if in polygon boundary points
+            elif item in self.poly_points:  # assign boundary points if in polygon boundary points
                 temp.append('Boundary')
             else:
-                for line in self.lines:
-                    if on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1], item[0][0], item[0][1]):
+                for line in self.lines:  # identify points residing on polygon borders
+                    if on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1],
+                                   item[0][0], item[0][1]):
                         temp.append('Boundary')
-                    else:
-                        temp.append(intersect_check(line[0][0], line[0][1], line[1][0], line[1][1], item[0][0], item[0][1], item[1][0], item[1][1]))
+                    else:  # identify intersecting points and coincident lines
+                        temp.append(intersect_check(line[0][0], line[0][1], line[1][0], line[1][1],
+                                                    item[0][0], item[0][1], item[1][0], item[1][1]))
             res.append(temp)
         self.results = res
-
 
     def count(self):
         counter = []
         for item in self.results:
-            n = 0  # need to deal with boundary points out of loop
+            n = 0
             for i in range(len(item)):
-                if i == (len(item)-2):  # need to specify case for end of list -2 since there are '+2' cases
+                if i == (len(item)-2):  # specify cases for end of list -2 elements since there are '+2' cases
                     if item[i] == 'Outside':
                         n = 0
-                    elif item[i] == None:  # if no intersection do not add to count
-                           pass
-                    elif item[i+1] == 'Collinear': # if intersects collinear line then do same test as vertex above
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                    elif item[i] is None:  # if no intersection do not add to count
+                        pass
+                    elif item[i+1] == 'Coincident':  # if intersects coincident then test orientations
+                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
                         self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # orientation for line +2
-                        if (self.max_y1  > item[i][1] and self.max_y2 > item[0][1]) or (self.max_y1  < item[i][1] and self.max_y2 < item[0][1]): # if they are the same record 0 count
+                        if (self.max_y1 > item[i][1] and self.max_y2 > item[0][1]) or \
+                                (self.max_y1 == item[i][1] and self.max_y2 == item[0][1]):  # if same count 0
                             pass
-                        else: # if not, record +1
+                        else:  # if not, count +1
                             n += 1
-                    elif item[i] == item[i+1] and item[i] != 'Boundary':  # vertex intersection
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                    elif item[i] == item[i+1] and item[i] != 'Boundary':  # vertex orientations
+                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
                         self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1])  # orientation for line +2
-                        if (self.max_y1  > item[i][1] and self.max_y2 > item[i+1][1]) or \
-                                (self.max_y1 == item[i][1] and self.max_y2 == item[i+1][1]):  # test orientation
+                        if (self.max_y1 > item[i][1] and self.max_y2 > item[i+1][1]) or \
+                                (self.max_y1 == item[i][1] and self.max_y2 == item[i+1][1]):  # if same count 0
                             pass
-                        else:  # record +1 of opposing lines
+                        else:  # count +1 of opposing lines
                             n += 1
-                    elif (item[i] == item[i-1]) or item[i] == 'Collinear' or item[i-1] == 'Collinear':
+                    elif (item[i] == item[i-1]) or item[i] == 'Coincident' or item[i-1] == 'Coincident':
                         pass
                     else:
                         n += 1
-                elif i == (len(item)-1): # specify cases for end of list since there are +1/+2 cases
+                elif i == (len(item)-1):  # -1 case iteration
                     if item[i] == 'Outside':
                         n = 0
-                    elif item[i] == None: # if no intersection do not add to count
-                            n = n
-                    elif item[0] == 'Collinear': # if intersects collinear line then do same test as vertex above
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                    elif item[i] is None:  # if no intersection do not add to count
+                        n = n
+                    elif item[0] == 'Coincident':  # if intersects coincident then test orientation
+                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
                         self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # orientation for line 2
                         if (self.max_y1 > item[i][1] and self.max_y2 > item[1][1]) or \
-                                (self.max_y1 < item[i][1] and self.max_y2 < item[1][1]): # if they are the same record 0 count
+                                (self.max_y1 == item[i][1] and self.max_y2 == item[1][1]):  # if same count 0
                             n = n
-                        else:  # record +1 of opposing lines
+                        else:  # count +1 if opposing orientation
                             n += 1
-                    elif item[i] == item[0] and item[i] != 'Boundary': # if intersections are the same for two sequential lines
-                        self.max_y1  = max(self.lines[i][1][1], self.lines[i][0][1]) # see what the orientation is for line 1
-                        self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1]) # see what the orientation is for line 2
-                        if (self.max_y1  > item[i][1] and self.max_y2 > item[0][1]) or (self.max_y1 == item[i][1] and self.max_y2 == item[0][1]): # if they are the same do not count
+                    elif item[i] == item[0] and item[i] != 'Boundary':  # vertex intersection
+                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                        self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1])  # orientation for line 2
+                        if (self.max_y1 > item[i][1] and self.max_y2 > item[0][1]) or \
+                                (self.max_y1 == item[i][1] and self.max_y2 == item[0][1]):  # if same count 0
                             n = n
-                        else: # if not, record +1
+                        else:  # if not count +1
                             n += 1
-                    elif (item[i] == item[i-1]) or item[i] == 'Collinear' or item[i-1] == 'Collinear':
+                    elif (item[i] == item[i-1]) or item[i] == 'Coincident' or item[i-1] == 'Coincident':
                         pass
                     else:
                         n += 1
                 else:
                     if item[i] == 'Outside':
                         n = 0
-                    elif item[i] == None: # if no intersection do not add to count
+                    elif item[i] is None:  # if no intersection do not add to count
+                        pass
+                    elif item[i+1] == 'Coincident':  # if intersects coincident then test orientation
+                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation is for line 1
+                        self.max_y2 = max(self.lines[i + 2][1][1], self.lines[i + 2][0][1])  # orientation is for line 2
+                        if (self.max_y1 > item[i][1] and self.max_y2 > item[i+2][1]) or \
+                                (self.max_y1 == item[i][1] and self.max_y2 == item[i+2][1]):  # if same count 0
                             pass
-                    elif item[i+1] == 'Collinear': # if intersects collinear line then do same test as vertex above
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # see what the orientation is for line 1
-                        self.max_y2 = max(self.lines[i + 2][1][1], self.lines[i + 2][0][1])  # see what the orientation is for line 2
-                        if (self.max_y1 > item[i][1] and self.max_y2 > item[i+2][1]) or (self.max_y1 < item[i][1] and self.max_y2 < item[i+2][1]): # if they are the same record 0 count
-                            pass
-                        else: # if not, record +1
+                        else:  # if not count +1
                             n += 1
-                    elif item[i] == item[i+1] and item[i] != 'Boundary': # if intersections are the same for two sequential lines
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1]) # see what the orientation is for line 1
-                        self.max_y2 = max(self.lines[i+1][1][1], self.lines[i+1][0][1]) # see what the orientation is for line 2
-                        if (((self.max_y1 > item[i][1]) and (self.max_y2 > item[i+1][1])) or ((self.max_y1 == item[i][1]) and (self.max_y2 == item[i+1][1]))): # if they are the same do not count
+                    elif item[i] == item[i+1] and item[i] != 'Boundary':  # test for vertices
+                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
+                        self.max_y2 = max(self.lines[i+1][1][1], self.lines[i+1][0][1])  # orientation is for line 2
+                        if (((self.max_y1 > item[i][1]) and (self.max_y2 > item[i+1][1])) or
+                                ((self.max_y1 == item[i][1]) and (self.max_y2 == item[i+1][1]))):  # if same count 0
                             pass
-                        else: # if not, record +1
+                        else:  # if not, record +1
                             n += 1
-                    elif (item[i] == item[i-1]) or item[i] == 'Collinear' or item[i-1] == 'Collinear':
+                    elif (item[i] == item[i-1]) or item[i] == 'Coincident' or item[i-1] == 'Coincident':
                         pass
                     else:
                         n += 1
@@ -260,7 +251,6 @@ class Poly:
             elif (n % 2) != 0:
                 label.append('inside')
         self.point_label = label
-        print(self.point_label)
 
 
 # Creating input point class
