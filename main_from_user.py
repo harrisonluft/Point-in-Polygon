@@ -1,11 +1,25 @@
 from plotter import Plotter
 
 
-# Import Points for Classification
 def user_input():
     data_list = []
-    user_point = input('insert coordinate as x, y: ')
+    user_point = input('Please insert coordinate as x, y: ')
     data_list.append([float(user_point[0]), float(user_point[3])])
+    return data_list
+
+
+def import_data(path):
+    raw_list = []
+    data_list = []
+    with open(path, "r") as f:
+        for line in f.readlines():
+            raw_list.append(line.split(','))
+
+    raw_list = raw_list[1:]  # getting rid of the headings
+
+    for i in range(len(raw_list)):  # converting coordinates to float
+        data_list.append([float(raw_list[i][1]), float(raw_list[i][2])])
+
     return data_list
 
 
@@ -81,12 +95,41 @@ def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4):
     return x, y
 
 
+# outputs the kind of intersection for each point crossing each line in the polygon
 def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
     # if mbr intersect, check coincidence as a marker for checking vertices
     if overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):
         return 'Coincident'
     else:
         return get_intersect(x1, y1, x2, y2, x3, y3, x4, y4)
+
+
+# function to translate list of intersection types into count of ray crossings.
+def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plus_two, point_minus_one, n_count):
+    if point is None:  # if no intersection do not add to count
+        pass
+    elif point_plus_one == 'Coincident':  # if intersects coincident then test orientations
+        max_y1 = max(line[1][1], line[0][1])  # orientation for line before coincidence
+        max_y2 = max(line_plus_two[1][1], line_plus_two[0][1])  # orientation for line after coincidence
+        if (max_y1 > point[1] and max_y2 > point_plus_two[1]) or \
+                (max_y1 == point[1] and max_y2 == point_plus_two[1]):  # if same orientation count 0
+            pass
+        else:  # if not, count +1
+            n_count += 1
+    elif point == point_plus_one and point != 'Boundary':  # vertex orientations
+        max_y1 = max(line[1][1], line[0][1])  # orientation for line 1
+        max_y2 = max(line_plus_one[1][1], line_plus_one[0][1])  # orientation for line i + 1
+        if (max_y1 > point[1] and max_y2 > point_plus_one[1]) or \
+                (max_y1 == point[1] and max_y2 == point_plus_one[1]):  # if same orientation count 0
+            pass
+        else:  # count +1 if opposing lines
+            n_count += 1
+    # ignore cases that would cause double counting
+    elif (point == point_minus_one) or point == 'Coincident' or point_minus_one == 'Coincident':
+        pass
+    else:
+        n_count += 1  # if ordinary intersection +1 to count
+    return n_count
 
 
 class Poly:
@@ -114,6 +157,7 @@ class Poly:
                 p1 = self.x_values[i], self.y_values[i]
         self.lines.append(tuple([p1, (self.x_values[0], self.y_values[0])]))
 
+    # generate minimum bounding rectangle for first-pass inclusion/exclusion of input points
     def mbr(self):
         self.min_x = minimum(self.x_values)
         self.min_y = minimum(self.y_values)
@@ -126,7 +170,8 @@ class Poly:
         else:
             return 'Outside'
 
-    def rca(self, ray_lines):
+    # generate list of mbr results, ray-line intersections, and coincidence for each point
+    def rca_ray(self, ray_lines):
         res = []
         for item in ray_lines:
             temp = []
@@ -145,93 +190,36 @@ class Poly:
             res.append(temp)
         self.results = res
 
-    def count(self):
-        counter = []
+    # test orientation of intersections and coincidence and count line crossings
+    def rca_count(self):
+        count_list = []
         for item in self.results:
             n = 0
             for i in range(len(item)):
-                if i == (len(item)-2):  # specify cases for end of list -2 elements since there are '+2' cases
+                # specify conditions for end of list since counter function references i + 1 and i + 2 points/lines
+                if i == (len(item)-2):
+                    n = counter(self.lines[i], self.lines[i + 1], self.lines[0],
+                                item[i], item[i + 1], item[0], item[i - 1], n)
+
+                elif i == (len(item)-1) and len(item) != 1:
+                    n = counter(self.lines[i], self.lines[0], self.lines[1],
+                                item[i], item[0], item[1], item[i - 1], n)
+                elif i == 0:  # specify condition for first item in list since counter references i - 1
                     if item[i] == 'Outside':
                         n = 0
-                    elif item[i] is None:  # if no intersection do not add to count
-                        pass
-                    elif item[i+1] == 'Coincident':  # if intersects coincident then test orientations
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
-                        self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # orientation for line +2
-                        if (self.max_y1 > item[i][1] and self.max_y2 > item[0][1]) or \
-                                (self.max_y1 == item[i][1] and self.max_y2 == item[0][1]):  # if same count 0
-                            pass
-                        else:  # if not, count +1
-                            n += 1
-                    elif item[i] == item[i+1] and item[i] != 'Boundary':  # vertex orientations
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
-                        self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1])  # orientation for line +2
-                        if (self.max_y1 > item[i][1] and self.max_y2 > item[i+1][1]) or \
-                                (self.max_y1 == item[i][1] and self.max_y2 == item[i+1][1]):  # if same count 0
-                            pass
-                        else:  # count +1 of opposing lines
-                            n += 1
-                    elif (item[i] == item[i-1]) or item[i] == 'Coincident' or item[i-1] == 'Coincident':
-                        pass
                     else:
-                        n += 1
-                elif i == (len(item)-1):  # -1 case iteration
-                    if item[i] == 'Outside':
-                        n = 0
-                    elif item[i] is None:  # if no intersection do not add to count
-                        n = n
-                    elif item[0] == 'Coincident':  # if intersects coincident then test orientation
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
-                        self.max_y2 = max(self.lines[1][1][1], self.lines[1][0][1])  # orientation for line 2
-                        if (self.max_y1 > item[i][1] and self.max_y2 > item[1][1]) or \
-                                (self.max_y1 == item[i][1] and self.max_y2 == item[1][1]):  # if same count 0
-                            n = n
-                        else:  # count +1 if opposing orientation
-                            n += 1
-                    elif item[i] == item[0] and item[i] != 'Boundary':  # vertex intersection
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
-                        self.max_y2 = max(self.lines[0][1][1], self.lines[0][0][1])  # orientation for line 2
-                        if (self.max_y1 > item[i][1] and self.max_y2 > item[0][1]) or \
-                                (self.max_y1 == item[i][1] and self.max_y2 == item[0][1]):  # if same count 0
-                            n = n
-                        else:  # if not count +1
-                            n += 1
-                    elif (item[i] == item[i-1]) or item[i] == 'Coincident' or item[i-1] == 'Coincident':
-                        pass
-                    else:
-                        n += 1
-                else:
-                    if item[i] == 'Outside':
-                        n = 0
-                    elif item[i] is None:  # if no intersection do not add to count
-                        pass
-                    elif item[i+1] == 'Coincident':  # if intersects coincident then test orientation
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation is for line 1
-                        self.max_y2 = max(self.lines[i + 2][1][1], self.lines[i + 2][0][1])  # orientation is for line 2
-                        if (self.max_y1 > item[i][1] and self.max_y2 > item[i+2][1]) or \
-                                (self.max_y1 == item[i][1] and self.max_y2 == item[i+2][1]):  # if same count 0
-                            pass
-                        else:  # if not count +1
-                            n += 1
-                    elif item[i] == item[i+1] and item[i] != 'Boundary':  # test for vertices
-                        self.max_y1 = max(self.lines[i][1][1], self.lines[i][0][1])  # orientation for line 1
-                        self.max_y2 = max(self.lines[i+1][1][1], self.lines[i+1][0][1])  # orientation is for line 2
-                        if (((self.max_y1 > item[i][1]) and (self.max_y2 > item[i+1][1])) or
-                                ((self.max_y1 == item[i][1]) and (self.max_y2 == item[i+1][1]))):  # if same count 0
-                            pass
-                        else:  # if not, record +1
-                            n += 1
-                    elif (item[i] == item[i-1]) or item[i] == 'Coincident' or item[i-1] == 'Coincident':
-                        pass
-                    else:
-                        n += 1
+                        n = counter(self.lines[i], self.lines[i + 1], self.lines[i + 2],
+                                    item[i], item[i + 1], item[i + 2], item[-1], n)
+                else:  # general case for points not at end of list
+                    n = counter(self.lines[i], self.lines[i + 1], self.lines[i + 2],
+                                item[i], item[i + 1], item[i + 2], item[i - 1], n)
             for i in range(len(item)):
                 if item[i] == 'Boundary':
                     n = -1
                 else:
                     pass
-            counter.append(n)
-        self.count = counter
+            count_list.append(n)
+        self.count = count_list
 
     def define_label(self):
         label = []
@@ -281,14 +269,14 @@ def main(polygon_path, output_path):
     input_points.ray_lines(polygon.max_x)
 
     # generate list with intersections, collinear instances, boundaries and MBR tests
-    polygon.rca(input_points.ray_lines)
+    polygon.rca_ray(input_points.ray_lines)
 
     # count based on elements in list: +1 for plain intersection,
     # +0 for same side vertex/coincident instance,
     # and +1 for dual side vertex/coincident instance
     # borders are given as -1,
     # outside mbr is given 0
-    polygon.count()
+    polygon.rca_count()
 
     # apply labels to counts
     polygon.define_label()
