@@ -76,23 +76,23 @@ def overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):  # identifies coincident line
 def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4):
     # returns a (x, y) tuple or None if there is no intersection or coincident
     # will use the (x, y) return as a reference to the original lines to adjust for crossing vertices
-    d = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    if d:
-        ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / d
-        ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / d
+    determinant = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    if determinant:
+        u1_2 = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / determinant
+        u3_4 = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / determinant
     else:
         return
-    if not (0 <= ua <= 1 and 0 <= ub <= 1):
+    if not (0 <= u1_2 <= 1 and 0 <= u3_4 <= 1):
         return
-    x = x1 + ua * (x2 - x1)
-    y = y1 + ua * (y2 - y1)
+    x = x1 + u1_2 * (x2 - x1)
+    y = y1 + u1_2 * (y2 - y1)
     return x, y
 
 
 # outputs the kind of intersection for each point crossing each line in the polygon
 def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
     if overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):
-        return 'Coincident'
+        return 'coincident'
     else:
         return get_intersect(x1, y1, x2, y2, x3, y3, x4, y4)
 
@@ -101,7 +101,7 @@ def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
 def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plus_two, point_minus_one, n_count):
     if point is None:  # if no intersection do not add to count
         pass
-    elif point_plus_one == 'Coincident':  # if intersects coincident then test orientations
+    elif point_plus_one == 'coincident':  # if intersects coincident then test orientations
         max_y1 = max(line[1][1], line[0][1])  # orientation for line before coincidence
         max_y2 = max(line_plus_two[1][1], line_plus_two[0][1])  # orientation for line after coincidence
         if (max_y1 > point[1] and max_y2 > point_plus_two[1]) or \
@@ -109,7 +109,7 @@ def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plu
             pass
         else:  # if not, count +1
             n_count += 1
-    elif point == point_plus_one and point != 'Boundary':  # vertex orientations
+    elif point == point_plus_one and point != 'boundary':  # vertex orientations
         max_y1 = max(line[1][1], line[0][1])  # orientation for line 1
         max_y2 = max(line_plus_one[1][1], line_plus_one[0][1])  # orientation for line i + 1
         if (max_y1 > point[1] and max_y2 > point_plus_one[1]) or \
@@ -118,7 +118,7 @@ def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plu
         else:  # count +1 if opposing lines
             n_count += 1
     # ignore cases that would cause double counting
-    elif (point == point_minus_one) or point == 'Coincident' or point_minus_one == 'Coincident':
+    elif (point == point_minus_one) or point == 'coincident' or point_minus_one == 'coincident':
         pass
     else:
         n_count += 1  # if ordinary intersection +1 to count
@@ -159,24 +159,24 @@ class Poly:
 
     def classify_mbr(self, x, y):
         if (x <= self.max_x) and (y <= self.max_y) and (x >= self.min_x) and (y >= self.min_y):
-            return 'Inside'
+            return 'inside'
         else:
-            return 'Outside'
+            return 'outside'
 
     # generate list of mbr results, ray-line intersections, and coincidence for each point
     def rca_rays(self, ray_lines):
         res = []
         for item in ray_lines:
             temp = []
-            if self.classify_mbr(item[0][0], item[0][1]) == 'Outside':  # determine inside/outside for MBR
-                temp.append('Outside')
+            if self.classify_mbr(item[0][0], item[0][1]) == 'outside':  # determine inside/outside for MBR
+                temp.append('outside')
             elif item in self.poly_points:  # assign boundary points if in polygon boundary points
-                temp.append('Boundary')
+                temp.append('boundary')
             else:
                 for line in self.lines:  # identify points residing on polygon borders
                     if on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1],
                                    item[0][0], item[0][1]):
-                        temp.append('Boundary')
+                        temp.append('boundary')
                     else:  # identify intersecting points and coincident lines
                         temp.append(intersect_check(line[0][0], line[0][1], line[1][0], line[1][1],
                                                     item[0][0], item[0][1], item[1][0], item[1][1]))
@@ -198,7 +198,7 @@ class Poly:
                     n = counter(self.lines[i], self.lines[0], self.lines[1],
                                 item[i], item[0], item[1], item[i - 1], n)
                 elif i == 0:  # specify condition for first item in list since counter references i - 1
-                    if item[i] == 'Outside':
+                    if item[i] == 'outside':
                         n = 0
                     else:
                         n = counter(self.lines[i], self.lines[i + 1], self.lines[i + 2],
@@ -207,7 +207,7 @@ class Poly:
                     n = counter(self.lines[i], self.lines[i + 1], self.lines[i + 2],
                                 item[i], item[i + 1], item[i + 2], item[i - 1], n)
             for i in range(len(item)):
-                if item[i] == 'Boundary':
+                if item[i] == 'boundary':
                     n = -1
                 else:
                     pass
@@ -274,7 +274,7 @@ def main(polygon_path, input_points_path, output_path):
 
     # apply labels to counts
     polygon.define_label()
-    # export_data(output_path, polygon.point_label)
+    export_data(output_path, polygon.point_label)
     # plot
     plot.add_polygon(polygon.x_values, polygon.y_values)
     for i in range(len(input_points.points)):
@@ -285,4 +285,4 @@ def main(polygon_path, input_points_path, output_path):
 if __name__ == '__main__':
     main("C:/Users/17075/Assignment_1/Project Template/polygon.csv",
          "C:/Users/17075/Assignment_1/Project Template/input.csv",
-         "C:/Users/17075/Assignment_1/Project Template/output_test.csv")
+         "C:/Users/17075/Assignment_1/Project Template/test_output.csv")

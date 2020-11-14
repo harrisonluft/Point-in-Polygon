@@ -3,8 +3,14 @@ from plotter import Plotter
 
 def user_input():
     data_list = []
-    user_point = input('Please insert coordinate as x, y: ')
-    data_list.append([float(user_point[0]), float(user_point[3])])
+    while True:
+        try:
+            user_point = input('Please input coordinate as x, y: ')
+            user_point_float = [float(user_point.split(',')[0]), float(user_point.split(',')[1])]
+            break
+        except:
+            print('Invalid input, please try again')
+    data_list.append(user_point_float)
     return data_list
 
 
@@ -99,7 +105,7 @@ def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4):
 def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
     # if mbr intersect, check coincidence as a marker for checking vertices
     if overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):
-        return 'Coincident'
+        return 'coincident'
     else:
         return get_intersect(x1, y1, x2, y2, x3, y3, x4, y4)
 
@@ -108,7 +114,7 @@ def intersect_check(x1, y1, x2, y2, x3, y3, x4, y4):
 def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plus_two, point_minus_one, n_count):
     if point is None:  # if no intersection do not add to count
         pass
-    elif point_plus_one == 'Coincident':  # if intersects coincident then test orientations
+    elif point_plus_one == 'coincident':  # if intersects coincident then test orientations
         max_y1 = max(line[1][1], line[0][1])  # orientation for line before coincidence
         max_y2 = max(line_plus_two[1][1], line_plus_two[0][1])  # orientation for line after coincidence
         if (max_y1 > point[1] and max_y2 > point_plus_two[1]) or \
@@ -116,7 +122,7 @@ def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plu
             pass
         else:  # if not, count +1
             n_count += 1
-    elif point == point_plus_one and point != 'Boundary':  # vertex orientations
+    elif point == point_plus_one and point != 'boundary':  # vertex orientations
         max_y1 = max(line[1][1], line[0][1])  # orientation for line 1
         max_y2 = max(line_plus_one[1][1], line_plus_one[0][1])  # orientation for line i + 1
         if (max_y1 > point[1] and max_y2 > point_plus_one[1]) or \
@@ -125,7 +131,7 @@ def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plu
         else:  # count +1 if opposing lines
             n_count += 1
     # ignore cases that would cause double counting
-    elif (point == point_minus_one) or point == 'Coincident' or point_minus_one == 'Coincident':
+    elif (point == point_minus_one) or point == 'coincident' or point_minus_one == 'coincident':
         pass
     else:
         n_count += 1  # if ordinary intersection +1 to count
@@ -166,24 +172,24 @@ class Poly:
 
     def classify_mbr(self, x, y):
         if (x <= self.max_x) and (y <= self.max_y) and (x >= self.min_x) and (y >= self.min_y):
-            return 'Inside'
+            return 'inside'
         else:
-            return 'Outside'
+            return 'outside'
 
     # generate list of mbr results, ray-line intersections, and coincidence for each point
     def rca_ray(self, ray_lines):
         res = []
         for item in ray_lines:
             temp = []
-            if self.classify_mbr(item[0][0], item[0][1]) == 'Outside':  # determine inside/outside for MBR
-                temp.append('Outside')
+            if self.classify_mbr(item[0][0], item[0][1]) == 'outside':  # determine inside/outside for MBR
+                temp.append('outside')
             elif item in self.poly_points:  # assign boundary points if in polygon boundary points
-                temp.append('Boundary')
+                temp.append('boundary')
             else:
                 for line in self.lines:  # identify points residing on polygon borders
                     if on_line_seg(line[0][0], line[0][1], line[1][0], line[1][1],
                                    item[0][0], item[0][1]):
-                        temp.append('Boundary')
+                        temp.append('boundary')
                     else:  # identify intersecting points and coincident lines
                         temp.append(intersect_check(line[0][0], line[0][1], line[1][0], line[1][1],
                                                     item[0][0], item[0][1], item[1][0], item[1][1]))
@@ -205,7 +211,7 @@ class Poly:
                     n = counter(self.lines[i], self.lines[0], self.lines[1],
                                 item[i], item[0], item[1], item[i - 1], n)
                 elif i == 0:  # specify condition for first item in list since counter references i - 1
-                    if item[i] == 'Outside':
+                    if item[i] == 'outside':
                         n = 0
                     else:
                         n = counter(self.lines[i], self.lines[i + 1], self.lines[i + 2],
@@ -214,7 +220,7 @@ class Poly:
                     n = counter(self.lines[i], self.lines[i + 1], self.lines[i + 2],
                                 item[i], item[i + 1], item[i + 2], item[i - 1], n)
             for i in range(len(item)):
-                if item[i] == 'Boundary':
+                if item[i] == 'boundary':
                     n = -1
                 else:
                     pass
