@@ -44,7 +44,8 @@ def maximum(values):
     return biggest
 
 
-# adapted from https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python
+# on_lin_seg() code is adapted from:
+# https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python
 # using point/slope formula to determine if input point is on line segment of polygon
 def on_line_seg(x1, y1, x2, y2, input_x, input_y):
     if x1 != x2:
@@ -73,13 +74,14 @@ def overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):  # identifies coincident line
 
 
 # Adapted from https://rosettacode.org/wiki/Find_the_intersection_of_two_lines
+# and Torben Jansen from https://observablehq.com/@toja/line-box-intersection published 1 Oct 2018
 def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4):
     # returns a (x, y) tuple or None if there is no intersection or coincident
     # will use the (x, y) return as a reference to the original lines to adjust for crossing vertices
-    determinant = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    if determinant:
-        u1_2 = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / determinant
-        u3_4 = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / determinant
+    d = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    if d:
+        u1_2 = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / d
+        u3_4 = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / d
     else:
         return
     if not (0 <= u1_2 <= 1 and 0 <= u3_4 <= 1):
@@ -109,7 +111,7 @@ def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plu
             pass
         else:  # if not, count +1
             n_count += 1
-    elif point == point_plus_one and point != 'boundary':  # vertex orientations
+    elif point == point_plus_one and point != 'boundary':  # vertex identification
         max_y1 = max(line[1][1], line[0][1])  # orientation for line 1
         max_y2 = max(line_plus_one[1][1], line_plus_one[0][1])  # orientation for line i + 1
         if (max_y1 > point[1] and max_y2 > point_plus_one[1]) or \
@@ -247,22 +249,25 @@ def main(polygon_path, input_points_path, output_path):
     plot = Plotter()
 
     # import data
+    print("read polygon.csv")
     poly_points = import_data(polygon_path)
+    print("read input.csv")
     points = import_data(input_points_path)
 
-    # init Polygon class
+    print("categorize points")
+    # assign Polygon class
     polygon = Poly(poly_points)
+
+    # assign Point class
+    input_points = Point(points)
 
     # create bounding box for polygon
     polygon.mbr()
 
-    # init Point class
-    input_points = Point(points)
-
     # create ray's for each point based on max x value of polygon bounding box
     input_points.ray_lines(polygon.max_x)
 
-    # generate list with intersections, collinear instances, boundaries and MBR tests
+    # generate list with intersections, coincident instances, boundaries and MBR test
     polygon.rca_rays(input_points.ray_lines)
 
     # count based on elements in list: +1 for plain intersection,
@@ -274,11 +279,19 @@ def main(polygon_path, input_points_path, output_path):
 
     # apply labels to counts
     polygon.define_label()
+
+    # export data
+    print("write output.csv")
     export_data(output_path, polygon.point_label)
+
+    print("plot polygon, points and rays")
     # plot
     plot.add_polygon(polygon.x_values, polygon.y_values)
     for i in range(len(input_points.points)):
+        plot.add_line(input_points.ray_lines[i][0][0], input_points.ray_lines[i][1][0],
+                       input_points.ray_lines[i][0][1], input_points.ray_lines[i][1][1])
         plot.add_point(input_points.points[i][0], input_points.points[i][1], kind=polygon.point_label[i])
+
     plot.show()
 
 

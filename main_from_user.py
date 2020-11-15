@@ -85,6 +85,7 @@ def overlap_check(x1, y1, x2, y2, x3, y3, x4, y4):  # identifies coincident line
 
 
 # Adapted from https://rosettacode.org/wiki/Find_the_intersection_of_two_lines
+# and Torben Jansen from https://observablehq.com/@toja/line-box-intersection published 1 Oct 2018
 def get_intersect(x1, y1, x2, y2, x3, y3, x4, y4):
     # returns a (x, y) tuple or None if there is no intersection or coincident
     # will use the (x, y) return as a reference to the original lines to adjust for crossing vertices
@@ -122,7 +123,7 @@ def counter(line, line_plus_one, line_plus_two, point, point_plus_one, point_plu
             pass
         else:  # if not, count +1
             n_count += 1
-    elif point == point_plus_one and point != 'boundary':  # vertex orientations
+    elif point == point_plus_one and point != 'boundary':  # vertex identification
         max_y1 = max(line[1][1], line[0][1])  # orientation for line 1
         max_y2 = max(line_plus_one[1][1], line_plus_one[0][1])  # orientation for line i + 1
         if (max_y1 > point[1] and max_y2 > point_plus_one[1]) or \
@@ -290,6 +291,8 @@ def main(polygon_path, output_path):
     # plot
     plot.add_polygon(polygon.x_values, polygon.y_values)
     for i in range(len(input_points.points)):
+        plot.add_line(input_points.ray_lines[i][0][0], input_points.ray_lines[i][1][0],
+                      input_points.ray_lines[i][0][1], input_points.ray_lines[i][1][1])
         plot.add_point(input_points.points[i][0], input_points.points[i][1], kind=polygon.point_label[i])
     plot.show()
 
