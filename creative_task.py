@@ -1,6 +1,12 @@
 from plotter import Plotter
 from main_from_file import Poly
-from main_from_file import Point
+from main_from_file import Points
+from shapely.geometry import Point
+import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+import geopandas as gpd
+import contextily as ctx
 
 
 def import_data(path):
@@ -49,7 +55,27 @@ def maximum(values):
     return biggest
 
 
-def main(polygon_path, input_points_path, output_path):
+def map_classification(path, points, labels, out_path):
+
+    raw = pd.read_csv(path)
+    #  from https://stackoverflow.com/questions/38961816/geopandas-set-crs-on-points
+    points_object = [Point(xy) for xy in zip(raw.eastings, raw.northings)]
+    # creating geodataframe
+    points_shp = gpd.GeoDataFrame(raw, geometry=points_object)
+    # assigning BNG CRS
+    points_shp.crs = {'init': 'epsg:27700'}
+    # Spherical Mercator Projection
+    proj = points_shp.to_crs(epsg=3857)
+
+    ax = proj.plot(column=points_shp.classifications, categorical=True, markersize=25, legend=True, cmap='tab20')
+    ctx.add_basemap(ax)
+    plt.title('Points Inside and Outside UCL')
+    plt.xlabel('Eastings')
+    plt.ylabel('Northings')
+    plt.show()
+
+
+def main(polygon_path, input_points_path, output_path, figure_path):
     plot = Plotter()
 
     # import data
@@ -61,7 +87,7 @@ def main(polygon_path, input_points_path, output_path):
     print("categorize points")
     # assign classes
     ucl_polygon = Poly(poly_points)
-    ucl_points = Point(points)
+    ucl_points = Points(points)
 
     # MBR
     ucl_polygon.mbr()
@@ -75,20 +101,19 @@ def main(polygon_path, input_points_path, output_path):
     ucl_polygon.define_label()
 
     # export data
-    print("write output.csv")
+    print('write output.csv')
     export_data(output_path, ucl_points.points, ucl_points.points, ucl_polygon.point_label)
 
-    print("plot polygon, points and rays")
+    print('plot polygon, points and rays')
     # plot
     plot.add_polygon(ucl_polygon.x_values, ucl_polygon.y_values)
     for i in range(len(ucl_points.points)):
         plot.add_point(ucl_points.points[i][0], ucl_points.points[i][1], kind=ucl_polygon.point_label[i])
     plot.show()
 
-    # Incorporating Basemap
-    test = import_data("C:/Users/17075/Assignment_1/Project Template/UCL_test_output.csv")
-    print(test)
-
+    print('plot map of UCL')
+    map_classification(output_path, ucl_points.points, ucl_polygon.point_label,
+                       "C:/Users/17075/Assignment_1/Project Template/UCL_output.png")
 
 if __name__ == '__main__':
     main("C:/Users/17075/Assignment_1/Project Template/UCL_polygon.csv",
