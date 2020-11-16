@@ -296,6 +296,6 @@ def main(polygon_path, input_points_path, output_path):
 
 
 if __name__ == '__main__':
-    main("C:/Users/17075/Assignment_1/Project Template/polygon.csv",
-         "C:/Users/17075/Assignment_1/Project Template/input.csv",
-         "C:/Users/17075/Assignment_1/Project Template/test_output.csv")
+    main(POLYGON CSV HERE,
+         INPUT POINTS CSV HERE,
+         OUTPUT CSV HERE)

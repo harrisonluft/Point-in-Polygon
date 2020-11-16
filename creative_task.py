@@ -116,7 +116,7 @@ def main(polygon_path, input_points_path, output_path, figure_path):
                        "C:/Users/17075/Assignment_1/Project Template/UCL_output.png")
 
 if __name__ == '__main__':
-    main("C:/Users/17075/Assignment_1/Project Template/UCL_polygon.csv",
-         "C:/Users/17075/Assignment_1/Project Template/UCL_test_points.csv",
-         "C:/Users/17075/Assignment_1/Project Template/UCL_test_output.csv")
+    main(UCL POLYGON CSV HERE,
+         UCL TEST POINTS CSV HERE,
+         UCL OUTPUT CSV HERE)
 

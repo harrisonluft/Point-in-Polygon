@@ -287,7 +287,10 @@ def main(polygon_path, output_path):
 
     # apply labels to counts
     polygon.define_label()
-    # export_data(output_path, polygon.point_label)
+
+    # export point result
+    export_data(output_path, polygon.point_label)
+
     # plot
     plot.add_polygon(polygon.x_values, polygon.y_values)
     for i in range(len(input_points.points)):
@@ -298,5 +301,5 @@ def main(polygon_path, output_path):
 
 
 if __name__ == '__main__':
-    main("C:/Users/17075/Assignment_1/Project Template/polygon.csv",
-         "C:/Users/17075/Assignment_1/Project Template/output_test.csv")
+    main(POLYGON CSV HERE,
+         OUTPUT CSV HERE)
