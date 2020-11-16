@@ -241,7 +241,7 @@ class Poly:
 
 
 # Creating input point class
-class Point:
+class Points:
     def __init__(self, points):
         self.points = points
 
@@ -270,7 +270,7 @@ def main(polygon_path, output_path):
     polygon.mbr()
 
     # init Point class
-    input_points = Point(points)
+    input_points = Points(points)
 
     # create ray's for each point based on max x value of polygon bounding box
     input_points.ray_lines(polygon.max_x)

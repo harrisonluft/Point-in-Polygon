@@ -9,10 +9,10 @@ def import_data(path):
         for line in f.readlines():
             raw_list.append(line.split(','))
 
-    raw_list = raw_list[1:]  # getting rid of the headings
+        raw_list = raw_list[1:]  # getting rid of the headings
 
-    for i in range(len(raw_list)):  # converting coordinates to float
-        data_list.append([float(raw_list[i][1]), float(raw_list[i][2])])
+        for i in range(len(raw_list)):  # converting coordinates to float
+            data_list.append([float(raw_list[i][1]), float(raw_list[i][2])])
 
     return data_list
 
@@ -230,7 +230,7 @@ class Poly:
 
 
 # Creating input point class
-class Point:
+class Points:
     def __init__(self, points):
         self.points = points
 
@@ -259,7 +259,7 @@ def main(polygon_path, input_points_path, output_path):
     polygon = Poly(poly_points)
 
     # assign Point class
-    input_points = Point(points)
+    input_points = Points(points)
 
     # create bounding box for polygon
     polygon.mbr()
@@ -289,7 +289,7 @@ def main(polygon_path, input_points_path, output_path):
     plot.add_polygon(polygon.x_values, polygon.y_values)
     for i in range(len(input_points.points)):
         plot.add_line(input_points.ray_lines[i][0][0], input_points.ray_lines[i][1][0],
-                       input_points.ray_lines[i][0][1], input_points.ray_lines[i][1][1])
+                      input_points.ray_lines[i][0][1], input_points.ray_lines[i][1][1])
         plot.add_point(input_points.points[i][0], input_points.points[i][1], kind=polygon.point_label[i])
 
     plot.show()
