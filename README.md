@@ -2,7 +2,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/harrisonluft/Assignment_1">
-    <img src="images/Figure_1.png" alt="Logo" width="200" height="200">
+    <img src="images/Figure_1.png" alt="Logo" width="320" height="240">
   </a>
 
   <h3 align="center">CEGE0096 Point in Polygon</h3>
@@ -20,7 +20,6 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-![ScreenShot](images/CEGE0043-Screenshot.PNG)
 
 The repository contains a program that tests whether a given point lies within a given polygon. It was completed as a portion of the CEGE0096 course for my MSc in Geospatial Science at UCL in the fall of 2020.
 The program is designed to solve this problem through 2 methods, 1) the bounding box and 2) the ray casting algorithm.
@@ -35,4 +34,13 @@ The program is designed to solve this problem through 2 methods, 1) the bounding
 * Each line segment of the polygon is then tested against each ray to determine the intersection type. A counter is used to keep track of the intersection type. 
 * Based on the counter result, a detemination is made whether the point is inside, outside, or and edge case.
 
+<!-- FILE DESCRIPTION -->
+## File Description: 
+### main_from_file.py
+* Contains a main function into which the user will supply three arguments: 
+	1) the file path to the csv containing the polygonpoints in clockwise order 
+	2) the csv containing the collection of input points for testing and 
+	3) an output csv file path for the resulting point classifications.
 
+### main_from_user.py
+* Required the user to supply arguments to the main function, i) and iii) from above, but will prompt the user to input a point from the console in the format ‘x, y’. If the user fails to input the point in the correct format, an exception will be raised until the point is input correctly.
