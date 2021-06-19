@@ -43,4 +43,12 @@ The program is designed to solve this problem through 2 methods, 1) the bounding
 	3) an output csv file path for the resulting point classifications.
 
 ### main_from_user.py
-* Required the user to supply arguments to the main function, i) and iii) from above, but will prompt the user to input a point from the console in the format ‘x, y’. If the user fails to input the point in the correct format, an exception will be raised until the point is input correctly.
+* Requires the user to supply arguments to the main function, i) and iii) from above, but will prompt the user to input a point from the console in the format ‘x, y’. If the user fails to input the point in the correct format, an exception will be raised until the point is input correctly.
+
+### creative_task.py
+![ScreenShot](images/Geo-Extension.PNG)
+* This file takes the functionality implimented above and applies it to real world British National Grid data. Because BNG is a cartesian coordinate system, the translation of the code is seamless (not having to accound for lat/longs or distortion). Meaning, I was able to define a polygon surrounding UCL and a set of points and run the program to determine whether or not the BNG coordinates were inside or outside the UCL campus. 
+
+<!-- ACKNOWLEDGEMENTS -->
+## Acknowledgements and Code Referece
+* Code for the developing elements of the ray cross algorithm, including testing whether points lie on a line, and checking for line segnment intersection come from [Kite](https://www.kite.com/python/answers/how-to-determine-if-a-point-is-on-a-line-segment-in-python), [Torban Jansen](https://observablehq.com/@toja/line-box-intersection), and [Rosetta Code](https://rosettacode.org/wiki/Find_the_intersection_of_two_lines). Many Thanks.
